@@ -1,0 +1,22 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t simobr/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true simobr/react-test npm test
+
+after_success:
+  - docker build -t simobr/multi-client ./client
+  - docker build -t simobr/multi-nginx ./nginx
+  - docker build -t simobr/multi-server ./server
+  - docker build -t simobr/multi-worker ./worker
+  # Log in to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take those images and push them to docker hub
+  - docker push simobr/multi-client
+  - docker push simobr/multi-nginx
+  - docker push simobr/multi-server
+  - docker push simobr/multi-worker
